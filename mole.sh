@@ -11,11 +11,18 @@ EDITOR="${EDITOR:-${VISUAL:-vi}}"
 
 # Function to print help TODO
 help() {
-  echo "Usage: $(basename "$0") [-h] [-l <directory>] [-f <file>] [-g <group>]"
-  echo "Options:"
-  echo "  -h                 Showss the help message and exit the program"
-  echo "  -g <group>         Ffefeilter - Opens file and adds to a group"
-  echo
+  echo "Usage: mole [OPTIONS] [DIRECTORY]"
+      echo "Options:"
+      echo "  -h                             Display help message."
+      echo "  [-g GROUP] FILE                Open file and assign(optional) the opened file to the specified group."
+      echo "  [FILTERS] [DIRECTORY]          Select the file that has been opened the last."
+      echo "  [-m] [FILTERS] [DIRECTORY]     Select the file in the directory that has been opened the most."
+      echo "  list [FILTERS] [DIRECTORY]     Display a list in the directory of files opened using filters."
+      echo " Filters(optional):"
+      echo "  [-g GROUP1[,GROUP2[,...]]]     Groups specification, the file(s) must be at least in one of the specified groups"
+      echo "  [-a DATE][-b DATE]             Specification of date -b before and -a after specific date."
+      echo " "
+      echo "  *[DIRECTORY] is by default current directory.*"
 }
 
 # Function to open a file
