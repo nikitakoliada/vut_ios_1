@@ -12,13 +12,16 @@ EDITOR="${EDITOR:-${VISUAL:-vi}}"
 # Function to print help TODO
 help() {
   echo "Usage: mole [OPTIONS] [DIRECTORY]"
+      echo " "
       echo "Options:"
+      echo " "
       echo "  -h                             Display help message."
       echo "  [-g GROUP] FILE                Open file and assign(optional) the opened file to the specified group."
       echo "  [FILTERS] [DIRECTORY]          Select the file that has been opened the last."
       echo "  [-m] [FILTERS] [DIRECTORY]     Select the file in the directory that has been opened the most."
       echo "  list [FILTERS] [DIRECTORY]     Display a list in the directory of files opened using filters."
       echo " Filters(optional):"
+      echo " "
       echo "  [-g GROUP1[,GROUP2[,...]]]     Groups specification, the file(s) must be at least in one of the specified groups"
       echo "  [-a DATE][-b DATE]             Specification of date -b before and -a after specific date."
       echo " "
@@ -85,7 +88,7 @@ if [ "$1" == "." ]; then
       echo "$file $current_date" >> $MOLE_RC
       echo "$file"
     else
-      echo "Error: no file found"
+      echo "Error: no file found">&2
       exit 1
     fi
   }
@@ -128,7 +131,7 @@ find_mfrequent_file_by_date() {
       echo "$file"
       echo "$file $current_date" >> $MOLE_RC
     else
-      echo "Error: no file found"
+      echo "Error: no file found">&2
       exit 1
     fi
   }
@@ -168,7 +171,6 @@ show_list(){
         }
     }
     }' "$MOLE_RC" )
-
     list=$(awk -v groups=$groups -v dir=$directory -v file_mole=$MOLE_RC -v select_files="$selected_files" '{
         split(select_files, sel_files, " ")
         for (file in sel_files) {
@@ -189,7 +191,8 @@ show_list(){
               cmd = "basename " sel_files[file]
               cmd | getline basename
               close(cmd)
-              print basename ":" substr(sel_groups, 2)
+              basename=basename""":"
+              printf "%-20s:%s\n", basename, substr(sel_groups, 2)
             }
             else{
               delete added_groups
@@ -204,10 +207,11 @@ show_list(){
               cmd = "basename " sel_files[file]
               cmd | getline basename
               close(cmd)
+              basename=basename""":"
               if(sel_groups != ""){
-                  print basename ":" substr(sel_groups, 2)
+                  printf "%-20s:%s\n", basename, substr(sel_groups, 2)
               }else{
-                  print basename ": " "-"
+                  printf "%-20s:%s\n", basename, " -"
                }
             }
         }
@@ -247,6 +251,8 @@ create_secret_log(){
     }
     }' "$MOLE_RC" | sort -k1)
 
+    echo " $before_date $after_date" <&2
+
     list=$(awk -v before="$before_date" -v after="$after_date" -v file_mole="$MOLE_RC" -v selected_files="$selected_files" '{
         split(selected_files, sel_files, " ")
         for (file in sel_files) {
@@ -260,9 +266,9 @@ create_secret_log(){
                     }
                   }
                   close(file_mole)
-                
+                if(selected !=""){
                 print sel_files[file] ";" substr(selected, 2)
-
+                }
         }
     }' "$MOLE_RC" | sort -u)
 
@@ -280,8 +286,6 @@ create_secret_log(){
       exit 1
     fi
 }
-
-
 
   if [[ "$1" = "-h" ]]; then
     help
@@ -338,11 +342,11 @@ create_secret_log(){
       while [[ $# -gt 0 ]]; do
           case "$1" in
               -b)
-                  end_date="$2"
+                  before_date="$2"
                   shift 2
                   ;;
               -a)
-                  start_date="$2"
+                  after_date="$2"
                   shift 2
                   ;;
               *)
