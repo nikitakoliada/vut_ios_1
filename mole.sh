@@ -1,5 +1,8 @@
 #!/bin/bash
 
+#author - Nikita Koliada
+#date - 10.03.2023 in Brno
+
 export POSIXLY_CORRECT=yes
 export LC_ALL=C
 
