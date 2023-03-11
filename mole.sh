@@ -44,7 +44,7 @@ open_file() {
       echo "$file $current_date $group" >> $MOLE_RC
       $EDITOR $file
     else
-      echo "The file does not exist or is not a regular file."
+      echo "The file does not exist or is not a regular file.">&2
       exit 1
     fi
 
@@ -195,7 +195,7 @@ show_list(){
               cmd | getline basename
               close(cmd)
               basename=basename""":"
-              printf "%-20s:%s\n", basename, substr(sel_groups, 2)
+              printf "%-20s%s\n", basename, substr(sel_groups, 2)
             }
             else{
               delete added_groups
@@ -212,9 +212,9 @@ show_list(){
               close(cmd)
               basename=basename""":"
               if(sel_groups != ""){
-                  printf "%-20s:%s\n", basename, substr(sel_groups, 2)
+                  printf "%-20s%s\n", basename, substr(sel_groups, 2)
               }else{
-                  printf "%-20s:%s\n", basename, " -"
+                  printf "%-20s%s\n", basename, " -"
                }
             }
         }
@@ -223,7 +223,7 @@ show_list(){
     if [[ -n $list ]]; then
           echo "$list"
         else
-          echo "Error: no files found"
+          echo "Error: no files found">&2
           exit 1
         fi
 }
@@ -254,8 +254,6 @@ create_secret_log(){
     }
     }' "$MOLE_RC" | sort -k1)
 
-    echo " $before_date $after_date" <&2
-
     list=$(awk -v before="$before_date" -v after="$after_date" -v file_mole="$MOLE_RC" -v selected_files="$selected_files" '{
         split(selected_files, sel_files, " ")
         for (file in sel_files) {
@@ -285,7 +283,7 @@ create_secret_log(){
       echo "$list" >> "$LOG_FILE"
       bzip2 "$LOG_FILE"
     else
-      echo "Error: no files found"
+      echo "Error: no files found">&2
       exit 1
     fi
 }
