@@ -181,8 +181,10 @@ show_list(){
             if (groups != "") {
                 split(groups, arr, ",")
                 for (group in arr) {
-                  delete added_groups
-                  while ((getline line < file_mole) > 0){
+                    for (key in added_groups) {
+                        delete added_groups[key]
+                    }
+                    while ((getline line < file_mole) > 0){
                     split(line, fields, " ")
                     if (fields[1] == sel_files[file] && fields[3] == arr[group] && !added_groups[fields[3]]) {
                         sel_groups = sel_groups ", " fields[3]
@@ -198,7 +200,9 @@ show_list(){
               printf "%-20s%s\n", basename, substr(sel_groups, 2)
             }
             else{
-              delete added_groups
+              for (key in added_groups) {
+                  delete added_groups[key]
+              }
               while ((getline line < file_mole) > 0){
                 split(line, fields, " ")
                 if (fields[1] == sel_files[file] && fields[3] != "" && !added_groups[fields[3]]) {
@@ -258,7 +262,9 @@ create_secret_log(){
         split(selected_files, sel_files, " ")
         for (file in sel_files) {
           selected=""
-                  delete added_dates
+                  for (key in added_dates) {
+                      delete added_dates[key]
+                  }
                   while ((getline line < file_mole) > 0){
                     split(line, fields, " ")
                     if (fields[1] == sel_files[file] && fields[2] < before && after < fields[2] && !added_dates[fields[2]]) {
