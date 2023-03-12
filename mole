@@ -12,7 +12,7 @@ MOLE_RC="$HOME/MOLE_RC"
 LOG_DIR="$HOME/.mole"
 EDITOR="${EDITOR:-${VISUAL:-vi}}"
 
-# Function to print help TODO
+# Function to print help
 help() {
   echo "Usage: mole [OPTIONS] [DIRECTORY]"
       echo " "
@@ -50,7 +50,7 @@ open_file() {
 
 
 }
-#TODO refactorize
+#finds the last opened/edited file
 find_last_file_by_date() {
 if [ "$1" == "." ]; then
       directory=$(realpath .)
@@ -95,7 +95,7 @@ if [ "$1" == "." ]; then
       exit 1
     fi
   }
-
+#finds the most frequent opened/edited file
 find_mfrequent_file_by_date() {
     if [ "$1" == "." ]; then
       directory=$(realpath .)
@@ -148,32 +148,34 @@ show_list(){
   groups=$2
   after_date=$3
   before_date=$4
+
   selected_files=$(awk -v group="$groups" -v dir="$directory" -v before="$before_date" -v after="$after_date" '{
-    if (group != "") {
-    split(group, arr, ",")
-    for (i in arr) {
-            if ($3 == arr[i] && $1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-                cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-                cmd | getline relative_path
-                close(cmd)
-                if (index(relative_path, "/") == 0 && !printed_files[relative_path]) {
+      if (group != "") {
+      split(group, arr, ",")
+      for (i in arr) {
+              if ($3 == arr[i] && $1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
+                  cmd = "basename " $1
+                  cmd | getline basename
+                  close(cmd)
+                  filepath = dir"/"basename
+                  if (!printed_files[$1] && filepath == $1) {
+                      printf "%s ", $1
+                      printed_files[$1] = 1
+                  }
+          }
+      }else{
+          if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
+              cmd = "basename " $1
+              cmd | getline basename
+              close(cmd)
+              filepath = dir"/"basename
+              if (!printed_files[$1] && filepath == $1) {
                     printf "%s ", $1
-                    printed_files[relative_path] = 1
-                }
-                }
-        }
-    }else{
-        if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-            cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-                        cmd | getline relative_path
-                        close(cmd)
-                        if (index(relative_path, "/") == 0 && !printed_files[relative_path]) {
-                            printf "%s ", $1
-                            printed_files[relative_path] = 1
-                        }
-        }
-    }
-    }' "$MOLE_RC" )
+                    printed_files[$1] = 1
+              }
+          }
+      }
+      }' "$MOLE_RC" )
     list=$(awk -v groups=$groups -v dir=$directory -v file_mole=$MOLE_RC -v select_files="$selected_files" '{
         split(select_files, sel_files, " ")
         for (file in sel_files) {
@@ -232,6 +234,7 @@ show_list(){
         fi
 }
 
+#creates bz2 of secret-log
 create_secret_log(){
   if [ "$1" == "." ]; then
     directories=""
@@ -294,6 +297,7 @@ create_secret_log(){
     fi
 }
 
+#main script
   if [[ "$1" = "-h" ]]; then
     help
     exit 1
@@ -407,7 +411,6 @@ create_secret_log(){
       exit 1
     fi
 
-    #TODO REFACTORIZE
     # find the last or most frequently edited file in the directory
     if [[ $mode == "last" ]]; then
       #last modified
