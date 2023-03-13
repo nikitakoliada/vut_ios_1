@@ -61,31 +61,42 @@ if [ "$1" == "." ]; then
     after_date=$3
     before_date=$4
     current_date=$(date +"%Y-%m-%d_%H-%M-%S")
-    file=$(tac "$MOLE_RC" | awk -v group="$groups" -v dir="$directory" -v before="$before_date" -v after="$after_date" '{
-    if (group != "") {
-    split(group, arr, ",")
-    for (i in arr) {
-            if ($3 == arr[i]  &&  $1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-              cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-              cmd | getline relative_path
-              close(cmd)
-              if (index(relative_path, "/") == 0) {
-                  print $1
-                  exit
-              }
+    selected_files=$(awk -v group="$groups" -v dir="$directory" '{
+        if (group != "") {
+            split(group, arr, ",")
+            for (i in arr) {
+                if ($3 == arr[i] && $1 ~ "^" dir && system("[ -e \""$1"\" ]") == 0) {
+                    cmd = "basename " $1
+                    cmd | getline basename
+                    close(cmd)
+                    filepath = dir"/"basename
+                    if (!printed_files[$1] && filepath == $1) {
+                        printf "%s ", $1
+                        printed_files[$1] = 1
+                    }
+                }
+            }
+        } else {
+            if ($1 ~ "^" dir && system("[ -e \""$1"\" ]") == 0) {
+                cmd = "basename " $1
+                cmd | getline basename
+                close(cmd)
+                filepath = dir"/"basename
+                if (!printed_files[$1] && filepath == $1) {
+                    printf "%s ", $1
+                    printed_files[$1] = 1
+                }
             }
         }
-    }else{
-        if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-            cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-            cmd | getline relative_path
-            close(cmd)
-            if (index(relative_path, "/") == 0) {
+    }' "$MOLE_RC")
+    file=$(tac "$MOLE_RC" | awk -v select_files="$selected_files" -v before="$before_date" -v after="$after_date" '{
+            split(select_files, sel_files, " ")
+            for (file in sel_files) {
+            if (after < $2 && $2 < before && sel_files[file] == $1) {
                 print $1
                 exit
             }
         }
-    }
     }' | tac )
     if [[ -n $file ]]; then
       echo "$file $current_date" >> $MOLE_RC
@@ -107,28 +118,24 @@ find_mfrequent_file_by_date() {
     before_date=$4
     current_date=$(date +"%Y-%m-%d_%H-%M-%S")
     file=$(awk -v group="$groups" -v dir="$directory" -v before="$before_date" -v after="$after_date" '{
-    if (group != "") {
-    split(group, arr, ",")
-    for (i in arr) {
-            if ( $3 == arr[i] &&  $1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-                cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-                cmd | getline relative_path
-                close(cmd)
-                if (index(relative_path, "/") == 0) {
+        if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
+            cmd = "basename " $1
+            cmd | getline basename
+            close(cmd)
+            filepath = dir"/"basename
+            if (filepath == $1) {
+                if (group != "") {
+                    split(group, arr, ",")
+                    for (i in arr) {
+                            if ( $3 == arr[i]){
+                              print $1
+                            }
+                    }
+                }else{
                     print $1
                 }
             }
         }
-    }else{
-        if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
-            cmd = "realpath --relative-to=\"" dir "\" \"" $1 "\""
-            cmd | getline relative_path
-            close(cmd)
-            if (index(relative_path, "/") == 0) {
-                print $1
-            }
-        }
-    }
     }' "$MOLE_RC" | awk '{ count[$1]++ } END { max = 0; for (val in count) if (count[val] > max) { max = count[val]; maxval = val } print maxval }')
     if [[ -n $file ]]; then
       echo "$file"
@@ -162,6 +169,7 @@ show_list(){
                       printf "%s ", $1
                       printed_files[$1] = 1
                   }
+              }
           }
       }else{
           if ($1 ~ "^" dir && after < $2 && $2 < before && system("[ -e "$1" ]") == 0) {
