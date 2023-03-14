@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #author - Nikita Koliada
+#login - xkolia00
 #date - 10.03.2023 in Brno
 
 export POSIXLY_CORRECT=yes
@@ -8,8 +9,7 @@ export LC_ALL=C
 
 
 # Constants
-MOLE_RC="$HOME/MOLE_RC"
-LOG_DIR="$HOME/.mole"
+LOG_DIR="/home/$USER/.mole/"
 EDITOR="${EDITOR:-${VISUAL:-vi}}"
 
 # Function to print help
@@ -295,10 +295,10 @@ create_secret_log(){
     fi
     # Set the log file name using the current user name and date/time
     LOG_FILE="$LOG_DIR/log_$(whoami)_$(date '+%Y-%m-%d_%H-%M-%S')"
-    touch $LOG_FILE
     if [[ -n $list ]]; then
       echo "$list" >> "$LOG_FILE"
-      bzip2 "$LOG_FILE"
+      touch $LOG_FILE
+      bzip2  "$LOG_FILE"
     else
       echo "Error: no files found">&2
       exit 1
