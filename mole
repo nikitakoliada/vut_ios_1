@@ -184,7 +184,20 @@ show_list(){
           }
       }
       }' "$MOLE_RC" )
-    list=$(awk -v groups=$groups -v dir=$directory -v file_mole=$MOLE_RC -v select_files="$selected_files" '{
+    max_len=0
+    longest_string=""
+    
+    # loop over space-separated elements and compare lengths
+    for s in $selected_files; do
+        filename=$(basename "$s")
+        len=${#filename}  # get length of element
+
+        if ((len > max_len)); then
+            max_len=$len
+        fi
+    done
+
+    list=$(awk -v groups=$groups -v dir=$directory -v max_lenght=$max_len -v file_mole=$MOLE_RC -v select_files="$selected_files" '{
         split(select_files, sel_files, " ")
         for (file in sel_files) {
             sel_groups = ""
@@ -207,7 +220,9 @@ show_list(){
               cmd | getline basename
               close(cmd)
               basename=basename""":"
-              printf "%-20s%s\n", basename, substr(sel_groups, 2)
+              width = max_lenght - length(basename) + 1
+              spaces = sprintf("%*s", width, "")
+              print basename spaces substr(sel_groups, 2)
             }
             else{
               for (key in added_groups) {
@@ -225,10 +240,12 @@ show_list(){
               cmd | getline basename
               close(cmd)
               basename=basename""":"
+              width = max_lenght - length(basename) + 1
+              spaces = sprintf("%*s", width, "")
               if(sel_groups != ""){
-                  printf "%-20s%s\n", basename, substr(sel_groups, 2)
+                  print basename spaces substr(sel_groups, 2)
               }else{
-                  printf "%-20s%s\n", basename, " -"
+                  print basename spaces " -"
                }
             }
         }
